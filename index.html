@@ -1052,16 +1052,44 @@ footer p{font-size:.8rem;}
   <img id="modalImg" src="" alt="">
 </div>
 
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  window._fbReady = new Promise(resolve => {
+    const app = initializeApp(window.FIREBASE_CONFIG || {});
+    const db  = getFirestore(app);
+    window._fbDb        = db;
+    window._fbDoc       = doc(db, 'uksda', 'main');
+    window._fbGetDoc    = getDoc;
+    window._fbSetDoc    = setDoc;
+    resolve();
+  });
+</script>
 <script>
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
 const CLOUD_NAME   = 'dsdnv4n8l';
 const CLOUD_KEY    = '833266596238586';
-const JBIN_ID      = '6a099835adc21f119ab20ac8';
-const JBIN_KEY     = '$2a$10$AuqSMWLlrv/UIid2/0NZ2up1Tky2BReSOWVjwCpjkar9Uiq3aIgmy';
-const JBIN_URL     = 'https://api.jsonbin.io/v3/b/' + JBIN_ID;
 const ADMIN_PASS   = 'UKSDA2026';
+
+// ── Firebase Config ──
+// TODO: Replace these values with your own Firebase project credentials.
+// Steps: https://console.firebase.google.com → New Project → Firestore Database → Start in test mode
+// Then go to Project Settings → Your apps → Add Web App → copy the config below.
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDP4L-Rg5iP4kOQ3vxC_X-Y7XCxJutxjao",
+  authDomain:        "uksda-school.firebaseapp.com",
+  projectId:         "uksda-school",
+  storageBucket:     "uksda-school.firebasestorage.app",
+  messagingSenderId: "856579395014",
+  appId:             "1:856579395014:web:44369518fdfe5f9183b6c7"
+};
+const FIRESTORE_DOC = 'uksda/main'; // collection/document path in Firestore
+
+// Pass config to module script
+window.FIREBASE_CONFIG = FIREBASE_CONFIG;
 
 // App state
 let DB = { events:[], announcements:[], calEvents:[], testimonials:[], subscribers:[], settings:{} };
@@ -1091,13 +1119,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ══════════════════════════════════════
-// DATABASE — JSONbin
+// DATABASE — Firebase Firestore
 // ══════════════════════════════════════
 async function dbLoad() {
   try {
-    const r = await fetch(JBIN_URL+'/latest', { headers:{'X-Master-Key':JBIN_KEY} });
-    const j = await r.json();
-    const rec = j.record || {};
+    await window._fbReady;
+    const snap = await window._fbGetDoc(window._fbDoc);
+    const rec  = snap.exists() ? snap.data() : {};
     DB.events        = rec.events        || [];
     DB.announcements = rec.announcements || [];
     DB.calEvents     = rec.calEvents     || [];
@@ -1108,11 +1136,10 @@ async function dbLoad() {
 }
 
 async function dbSave() {
-  await fetch(JBIN_URL, {
-    method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JBIN_KEY},
-    body: JSON.stringify(DB)
-  });
+  try {
+    await window._fbReady;
+    await window._fbSetDoc(window._fbDoc, DB);
+  } catch(e) { console.warn('DB save error:', e.message); }
 }
 
 // ══════════════════════════════════════
