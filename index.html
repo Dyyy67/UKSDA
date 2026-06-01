@@ -193,6 +193,9 @@ section{padding:4.5rem 2rem;}
 .testi-name{font-weight:800;color:#fff;font-size:.85rem;}
 .testi-role{font-size:.75rem;color:rgba(255,255,255,.55);}
 .testi-empty{text-align:center;color:rgba(255,255,255,.5);padding:3rem;grid-column:1/-1;}
+.testi-toggle-wrap{text-align:center;margin-top:1.8rem;}
+.testi-toggle-btn{background:transparent;border:2px solid rgba(245,197,24,.55);color:var(--gold);padding:.62rem 1.8rem;border-radius:50px;font-family:'Nunito',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;transition:all .25s;letter-spacing:.3px;}
+.testi-toggle-btn:hover{background:rgba(245,197,24,.12);border-color:var(--gold);}
 
 /* SUBSCRIBE */
 .subscribe-bar{background:var(--gold);padding:2rem;}
@@ -703,6 +706,9 @@ footer p{font-size:.8rem;}
     <div class="sec-sub light fi">Hear from our school community — real experiences, real stories</div>
     <div class="testi-grid" id="testiGrid">
       <div class="testi-empty">💬 Be the first to share your experience!</div>
+    </div>
+    <div class="testi-toggle-wrap" id="testiToggleWrap" style="display:none;">
+      <button class="testi-toggle-btn" id="testiToggleBtn" onclick="toggleTestimonials()">See More ▼</button>
     </div>
   </div>
 </section>
@@ -1507,12 +1513,18 @@ function renderTestiAdmList() {
   });
 }
 
+const TESTI_LIMIT = 3;
+let testiExpanded = false;
+
 function renderTestiPublic() {
   const grid=document.getElementById('testiGrid');
+  const wrap=document.getElementById('testiToggleWrap');
+  const btn=document.getElementById('testiToggleBtn');
   const approved=DB.testimonials.filter(t=>t.approved);
-  if(!approved.length){ grid.innerHTML='<div class="testi-empty">💬 Be the first to share your experience!</div>'; return; }
+  if(!approved.length){ grid.innerHTML='<div class="testi-empty">💬 Be the first to share your experience!</div>'; wrap.style.display='none'; return; }
   grid.innerHTML='';
-  approved.forEach(t=>{
+  const visible = testiExpanded ? approved : approved.slice(0, TESTI_LIMIT);
+  visible.forEach(t=>{
     const stars='⭐'.repeat(t.rating);
     const initials=t.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     const card=document.createElement('div'); card.className='testi-card fi';
@@ -1522,6 +1534,20 @@ function renderTestiPublic() {
       <div><div class="testi-name">${t.name}</div><div class="testi-role">${t.role}</div></div></div>`;
     grid.appendChild(card); observer.observe(card);
   });
+  if(approved.length > TESTI_LIMIT){
+    wrap.style.display='block';
+    btn.textContent = testiExpanded ? 'See Less ▲' : 'See More ▼';
+  } else {
+    wrap.style.display='none';
+  }
+}
+
+function toggleTestimonials() {
+  testiExpanded = !testiExpanded;
+  renderTestiPublic();
+  if(!testiExpanded){
+    document.getElementById('testiGrid').scrollIntoView({behavior:'smooth', block:'start'});
+  }
 }
 
 // ══════════════════════════════════════
